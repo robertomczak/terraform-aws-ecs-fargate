@@ -38,6 +38,7 @@ resource "aws_iam_role_policy" "read_repository_credentials" {
 # IAM - Task role, basic. Append policies to this role for S3, DynamoDB etc.
 #####
 resource "aws_iam_role" "task" {
+  count = try(var.task_role_arn, false) ? 0 : 1
   name               = "${var.name_prefix}-task-role"
   assume_role_policy = data.aws_iam_policy_document.task_assume.json
 
@@ -45,16 +46,17 @@ resource "aws_iam_role" "task" {
 }
 
 resource "aws_iam_role_policy" "log_agent" {
+  count = try(var.task_role_arn, false) ? 0 : 1
   name   = "${var.name_prefix}-log-permissions"
-  role   = aws_iam_role.task.id
+  role   = aws_iam_role.task[0].id
   policy = data.aws_iam_policy_document.task_permissions.json
 }
 
 resource "aws_iam_role_policy" "ecs_exec_inline_policy" {
-  count = var.enable_execute_command ? 1 : 0
+  count = try(var.task_role_arn, false)  ? 0 : var.enable_execute_command ? 1 : 0
 
   name   = "${var.name_prefix}-ecs-exec-permissions"
-  role   = aws_iam_role.task.id
+  role   = aws_iam_role.task[0].id
   policy = data.aws_iam_policy_document.task_ecs_exec_policy[0].json
 }
 
@@ -149,7 +151,7 @@ resource "aws_ecs_task_definition" "task" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.task_definition_cpu
   memory                   = var.task_definition_memory
-  task_role_arn            = aws_iam_role.task.arn
+  task_role_arn            = var.task_role_arn ? var.task_role_arn : aws_iam_role.task[0].arn
 
   dynamic "ephemeral_storage" {
     for_each = var.task_definition_ephemeral_storage == 0 ? [] : [var.task_definition_ephemeral_storage]

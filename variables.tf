@@ -294,3 +294,8 @@ variable "enable_execute_command" {
   description = "Specifies whether to enable Amazon ECS Exec for the tasks within the service."
   default     = true
 }
+
+variable "task_role_arn" {
+  type = string
+  description = "Defines Task role ARN, if specified Task role is not created and specified is used"
+}

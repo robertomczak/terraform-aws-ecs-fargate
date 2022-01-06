@@ -15,12 +15,12 @@ output "target_group_name" {
 
 output "task_role_arn" {
   description = "The Amazon Resource Name (ARN) specifying the ECS service role."
-  value       = aws_iam_role.task.arn
+  value       = var.task_role_arn ? var.task_role_arn : aws_iam_role.task[0].arn
 }
 
 output "task_role_name" {
   description = "The name of the Fargate task service role."
-  value       = aws_iam_role.task.name
+  value       = var.task_role_arn ? "" : aws_iam_role.task[0].name
 }
 
 output "service_sg_id" {
